@@ -4,7 +4,9 @@ import TodoList from "./components/TodoList";
 import FilterTabs from "./components/FilterTabs";
 import WeekNavigator from "./components/WeekNavigator";
 
-const STORAGE_KEY = "todos_week_app";
+const STORAGE_KEY = "minimal_todo_app_todos";
+const SELECTED_DATE_KEY = "todos_selected_date";
+const WEEK_START_KEY = "todos_week_start_date";
 
 function formatDate(date) {
   const year = date.getFullYear();
@@ -25,28 +27,62 @@ function getWeekStart(date) {
 function loadFromLocalStorage() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) return { todos: [], nextId: 0 };
-    const parsed = JSON.parse(saved);
-    return { todos: parsed.todos || [], nextId: parsed.nextId || 0 };
+    if (!saved) return [];
+    return JSON.parse(saved);
   } catch {
-    return { todos: [], nextId: 0 };
+    return [];
+  }
+}
+
+function loadSelectedDateFromLocalStorage() {
+  try {
+    const saved = localStorage.getItem(SELECTED_DATE_KEY);
+    if (!saved) return new Date();
+    return new Date(saved);
+  } catch {
+    return new Date();
+  }
+}
+
+function loadWeekStartFromLocalStorage() {
+  try {
+    const saved = localStorage.getItem(WEEK_START_KEY);
+    if (!saved) return getWeekStart(new Date());
+    return new Date(saved);
+  } catch {
+    return getWeekStart(new Date());
   }
 }
 
 export default function App() {
-  const [todos, setTodos] = useState(() => loadFromLocalStorage().todos);
-  const [nextId, setNextId] = useState(() => loadFromLocalStorage().nextId);
+  const [todos, setTodos] = useState(() => loadFromLocalStorage());
   const [currentFilter, setCurrentFilter] = useState("all");
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [weekStartDate, setWeekStartDate] = useState(() => getWeekStart(new Date()));
+  const [selectedDate, setSelectedDate] = useState(() => loadSelectedDateFromLocalStorage());
+  const [weekStartDate, setWeekStartDate] = useState(() => loadWeekStartFromLocalStorage());
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ todos, nextId }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
     } catch (e) {
       console.warn("저장 실패:", e);
     }
-  }, [todos, nextId]);
+  }, [todos]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(SELECTED_DATE_KEY, selectedDate.toISOString());
+    } catch (e) {
+      console.warn("선택 날짜 저장 실패:", e);
+    }
+  }, [selectedDate]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(WEEK_START_KEY, weekStartDate.toISOString());
+    } catch (e) {
+      console.warn("주간 시작일 저장 실패:", e);
+    }
+  }, [weekStartDate]);
 
   function handleSelectDate(date) { setSelectedDate(date); }
   function handlePrevWeek() {
@@ -56,11 +92,10 @@ export default function App() {
     setWeekStartDate((prev) => { const d = new Date(prev); d.setDate(d.getDate() + 7); return d; });
   }
   function handleAddTodo(text) {
-    setTodos((prev) => [...prev, { id: nextId, text, completed: false, date: formatDate(selectedDate) }]);
-    setNextId((prev) => prev + 1);
+    setTodos((prev) => [...prev, { id: Date.now(), text, isCompleted: false, date: formatDate(selectedDate) }]);
   }
   function handleToggleComplete(id) {
-    setTodos((prev) => prev.map((t) => t.id === id ? { ...t, completed: !t.completed } : t));
+    setTodos((prev) => prev.map((t) => t.id === id ? { ...t, isCompleted: !t.isCompleted } : t));
   }
   function handleEditTodo(id, newText) {
     setTodos((prev) => prev.map((t) => t.id === id ? { ...t, text: newText } : t));
@@ -71,8 +106,8 @@ export default function App() {
 
   const filteredTodos = todos.filter((todo) => {
     if (todo.date !== formatDate(selectedDate)) return false;
-    if (currentFilter === "active") return !todo.completed;
-    if (currentFilter === "completed") return todo.completed;
+    if (currentFilter === "active") return !todo.isCompleted;
+    if (currentFilter === "completed") return todo.isCompleted;
     return true;
   });
 

@@ -6,8 +6,13 @@ export default function TodoItem({ todo, onToggleComplete, onEditTodo, onDeleteT
 
   function handleEditConfirm() {
     const trimmed = editText.trim();
-    if (trimmed && trimmed !== todo.text) onEditTodo(todo.id, trimmed);
-    else setEditText(todo.text);
+    if (!trimmed) {
+      window.alert("내용을 입력해주세요!");
+      return;
+    }
+    if (trimmed !== todo.text) {
+      onEditTodo(todo.id, trimmed);
+    }
     setIsEditing(false);
   }
 
@@ -36,7 +41,7 @@ export default function TodoItem({ todo, onToggleComplete, onEditTodo, onDeleteT
       ) : (
         <>
           {/* Todo 텍스트 */}
-          <span className={`flex-1 text-sm font-medium ${todo.completed ? "line-through text-gray-300" : "text-gray-700"}`}>
+          <span className={`flex-1 text-sm font-medium ${todo.isCompleted ? "line-through text-gray-300" : "text-gray-700"}`}>
             {todo.text}
           </span>
 
@@ -45,19 +50,21 @@ export default function TodoItem({ todo, onToggleComplete, onEditTodo, onDeleteT
             <button
               onClick={() => onToggleComplete(todo.id)}
               className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all
-                ${todo.completed
-                  ? "bg-violet-50 text-violet-300 hover:bg-violet-100"
-                  : "bg-[#672be0] text-white hover:bg-[#5820c8] shadow-sm shadow-violet-200"
+                ${todo.isCompleted
+                  ? "bg-[#672be0] text-white hover:bg-[#5820c8]"
+                  : "bg-violet-50 text-violet-300 hover:bg-violet-100"
                 }`}
             >
-              완료
+              {todo.isCompleted ? "취소" : "완료"}
             </button>
-            <button
-              onClick={() => { setEditText(todo.text); setIsEditing(true); }}
-              className="px-3 py-1.5 rounded-full text-xs font-bold bg-violet-50 text-violet-400 hover:bg-violet-100 transition"
-            >
-              수정
-            </button>
+            {!todo.isCompleted && (
+              <button
+                onClick={() => { setEditText(todo.text); setIsEditing(true); }}
+                className="px-3 py-1.5 rounded-full text-xs font-bold bg-violet-50 text-violet-400 hover:bg-violet-100 transition"
+              >
+                수정
+              </button>
+            )}
             <button
               onClick={() => onDeleteTodo(todo.id)}
               className="px-3 py-1.5 rounded-full text-xs font-bold bg-gray-800 text-white hover:bg-gray-900 transition"

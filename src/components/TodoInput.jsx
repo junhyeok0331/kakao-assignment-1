@@ -1,13 +1,18 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 export default function TodoInput({ onAddTodo }) {
   const [inputText, setInputText] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  const inputRef = useRef(null);
 
   function handleSubmit() {
     const trimmed = inputText.trim();
-    if (!trimmed) { setErrorMessage("할 일을 입력해주세요."); return; }
-    setErrorMessage("");
+    if (!trimmed) {
+      window.alert("할 일을 입력해주세요!");
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+      return;
+    }
     onAddTodo(trimmed);
     setInputText("");
   }
@@ -19,6 +24,7 @@ export default function TodoInput({ onAddTodo }) {
       {/* 입력창 + 추가 버튼 통합 박스 */}
       <div className="flex items-center rounded-2xl border border-gray-200 overflow-hidden focus-within:border-[#672be0] focus-within:ring-2 focus-within:ring-violet-100 transition-all">
         <input
+          ref={inputRef}
           type="text"
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
@@ -33,10 +39,6 @@ export default function TodoInput({ onAddTodo }) {
           추가
         </button>
       </div>
-
-      {errorMessage && (
-        <p className="mt-1.5 text-xs text-red-400 pl-1">{errorMessage}</p>
-      )}
     </div>
   );
 }
